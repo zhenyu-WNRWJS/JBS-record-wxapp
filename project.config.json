@@ -1,0 +1,43 @@
+{
+  "miniprogramRoot": "dist/",
+  "projectname": "myapp",
+  "description": "剧本小记",
+  "appid": "wxd1317c4ad9c115a2",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "compileHotReLoad": false,
+    "postcss": false,
+    "preloadBackgroundData": false,
+    "minified": false,
+    "newFeature": true,
+    "autoAudits": false,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": false,
+    "scopeDataCheck": false,
+    "useCompilerModule": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "ignoreUploadUnusedFiles": false,
+    "minifyWXSS": false,
+    "minifyWXML": false
+  },
+  "compileType": "miniprogram",
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {},
+  "condition": {},
+  "libVersion": "3.7.7",
+  "srcMiniprogramRoot": "dist/",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  }
+}
