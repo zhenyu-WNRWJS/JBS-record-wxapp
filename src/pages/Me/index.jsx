@@ -34,7 +34,7 @@ function Me() {
   return (
     // <ConfigProvider theme={darkTheme}>
     <View style={{ height: '100vh' }}>
-      <MyFooter />
+      {/* <MyFooter tab={'1'} /> */}
     </View>
     // </ConfigProvider>
     // <ConfigProvider locale={locale}>
