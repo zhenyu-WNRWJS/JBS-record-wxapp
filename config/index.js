@@ -33,7 +33,7 @@ export default defineConfig(async (merge, { command, mode }) => {
     framework: 'react',
     compiler: {
 
-      type: 'webpack5', 
+      type: 'webpack5',
       prebundle: {
         enable: false
       }
@@ -58,7 +58,7 @@ export default defineConfig(async (merge, { command, mode }) => {
         }
       },
       webpackChain(chain, webpack) {
-        
+
       },
     },
     h5: {
@@ -92,6 +92,17 @@ export default defineConfig(async (merge, { command, mode }) => {
       postcss: {
         cssModules: {
           enable: false, // 默认为 false，如需使用 css modules 功能，则设为 true
+        }
+      }
+    },
+    devServer: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3000', // 你的 Mock 服务器地址
+          changeOrigin: true,
+          pathRewrite: {
+            '^/api': ''
+          }
         }
       }
     }

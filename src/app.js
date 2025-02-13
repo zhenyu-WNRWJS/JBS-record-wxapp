@@ -4,6 +4,13 @@ import { ConfigProvider } from '@nutui/nutui-react-taro'
 // 全局样式
 import './app.less'
 // import '../../assets/font/iconfont.css'
+// if (process.env.NODE_ENV === 'development') {
+//   import('./mock/index').then(mock => {
+//     // 使用 Mock
+//     console.log(mock)
+//   });
+// }
+import './mock/index'
 
 
 function App(props) {

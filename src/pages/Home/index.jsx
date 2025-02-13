@@ -1,64 +1,49 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { View, Text } from '@tarojs/components'
-import { Button, ConfigProvider, TextArea, Dialog, CalendarCard } from '@nutui/nutui-react-taro'
-import enUS from '@nutui/nutui-react-taro/dist/locales/en-US'
-import zhCN from '@nutui/nutui-react-taro/dist/locales/zh-CN'
+import { Button, ConfigProvider, TextArea, Dialog, CalendarCard, VirtualList } from '@nutui/nutui-react-taro'
+import request from '../../utils/request'
+import MyCalendar from '../../components/MyCalendar'
 import './index.less'
-import MyCalendar from '../../components/MyCalendar/index'
-import MyFooter from '../../components/Myfooter'
 
-function Home() {
-  // const [locale, setLocale] = useState(zhCN)
-  // const localeKey = locale === zhCN ? 'zhCN' : 'enUS'
-  // const [visible, setVisible] = useState(false)
-  // const [translated] = useState({
-  //   zhCN: {
-  //     welcome: '欢迎使用 NutUI React 开发 Taro 多端项目。',
-  //     button: '使用英文',
-  //     open: '点击打开',
-  //   },
-  //   enUS: {
-  //     welcome: 'Welcome to use NutUI React to develop Taro multi-terminal projects.',
-  //     button: 'Use Chinese',
-  //     open: 'Click Me',
-  //   },
-  // })
-  // const handleSwitchLocale = () => {
-  //   setLocale(locale === zhCN ? enUS : zhCN)
-  // }
-  // const date = new Date('2023-01-01')
-  // const onChange = (val) => {
-  //   console.log(val)
-  // }
+const pbStatus = ['🆘', '🈵']
 
+function Add() {
+  const [list, setList] = useState([])
+  const fetchListData = async () => {
+    const res = await request({
+      url: '/api/list'
+    });
+    setList(res.data)
+  };
+  useEffect(() => {
+    fetchListData()
+  }, [])
   return (
-    // <ConfigProvider theme={darkTheme}>
-    <View style={{ height: '100vh' }}>
-      {/* <MyFooter tab={'1'}/> */}
+    <View className='home'>
+      <View className="home-top">
+        <MyCalendar />
+      </View>
+      <View className={'home-main'}>
+        <View className={'jb-list'}>
+          {
+            list.map((l) => (
+              <View id={`list-${l.id}`} className={'jb-list-item'}>
+                <View className={'list-item-header'}>
+                  <View className={'icon'}>{pbStatus[l.id-1]}</View>
+                  <View className={'title'}>{l.name}</View>
+                </View>
+                <View className={'list-item-content'}>
+                  {l.comment}
+                </View>
+              </View>
+            ))
+          }
+        </View>
+      </View>
+
     </View>
-    // </ConfigProvider>
-    // <ConfigProvider locale={locale}>
-    //   <View className='nutui-react-demo'>
-    //     <View>{translated[localeKey].welcome}</View>
-    //     <View>
-    //       <Button type='primary' onClick={handleSwitchLocale}>
-    //         {translated[localeKey].button}
-    //       </Button>
-    //       <Button type='success' onClick={() => setVisible(true)}>
-    //         {translated[localeKey].open}
-    //       </Button>
-    //       <Dialog
-    //         visible={visible}
-    //         onConfirm={() => setVisible(false)}
-    //         onCancel={() => setVisible(false)}>
-    //         {translated[localeKey].welcome}
-    //       </Dialog>
-    //       <TextArea disabled showCount maxLength={20} />
-    //     </View>
-    //     <MyCalendar />
-    //   </View>
-    // </ConfigProvider>
   )
 }
 
-export default Home
+export default Add
+

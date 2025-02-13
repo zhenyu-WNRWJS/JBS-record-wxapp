@@ -4,6 +4,7 @@
   "setting": {
     "compileHotReLoad": true,
     "urlCheck": false,
-    "useIsolateContext": true
+    "useIsolateContext": true,
+    "bigPackageSizeSupport": true
   }
 }
