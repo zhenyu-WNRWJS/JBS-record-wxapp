@@ -58,10 +58,10 @@ export default function MyCalendar() {
         {[...Array(daysInMonth)].map((_, index) => (
           <View className={`day-item `}>
             {/* <View key={index} className={`day-num ${renderDayNow(index)}`}> */}
-            {/* {index + 1} */}
+            {index + 1}
 
             {/* </View> */}
-            <Image src={src} height={80} />
+            {/* <Image src={src} height={80} /> */}
           </View>
 
         ))}

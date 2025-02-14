@@ -20,19 +20,19 @@ export default defineAppConfig({
     list: [
       {
         pagePath: 'pages/Home/index',
-        text: '日历',
+        text: '',
         iconPath: 'images/calendar.png',
         selectedIconPath: "images/calendar-select.png"
       },
       {
         pagePath: 'pages/Add/index',
-        text: '添加',
+        text: '',
         iconPath: 'images/add.png',
         selectedIconPath: "images/add-select.png"
       },
       {
         pagePath: 'pages/List/index',
-        text: '拼场',
+        text: '',
         iconPath: 'images/list.png',
         selectedIconPath: "images/list-select.png"
       },

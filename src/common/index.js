@@ -32,3 +32,30 @@ export const footerTabs = [
     icon: <User size={20} />
   },
 ]
+
+export const jubenDetailList = [
+  {
+    name: '流氓叙事',
+    roles: ['程聿怀', '程走柳', '蒋伯驾', '以撒', '缪宏谟', '黛利拉']
+    // roles: [
+    //   {
+    //     role: '程聿怀',
+    //   },
+    //   {
+    //     role: '程走柳',
+    //   },
+    //   {
+    //     role: '蒋伯驾',
+    //   },
+    //   {
+    //     role: '以撒',
+    //   },
+    //   {
+    //     role: '缪宏谟',
+    //   },
+    //   {
+    //     role: '黛利拉',
+    //   },
+    // ]
+  }
+]
