@@ -6,12 +6,13 @@ import { Space, Button, Image } from '@nutui/nutui-react-taro'
 import { useState } from 'react'
 import src from '../../images/JBPhoto/luanchun.jpg'
 
-const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
+const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 export default function MyCalendar() {
   // const currentDate = moment();
   // const daysInMonth = currentDate.daysInMonth(); // 获取当前月份的天数
   // const firstDayOfWeek = currentDate.startOf('month').day(); // 获取当前月份第一天是星期几
   // const currentDayofMonth = moment().date()
+  const [value, setValue] = useState(moment().date())
 
   const [currentDate, setCurrentDate] = useState(moment());
   const daysInMonth = currentDate.daysInMonth(); // 获取当前月份的天数
@@ -33,12 +34,30 @@ export default function MyCalendar() {
     }
     return ''
   }
+  const renderDayNow2 = (index) => {
+    const now = moment()
+    if (currentDate.format('YYYY-MM') == now.format('YYYY-MM') && currentDayOfMonth == index) {
+      return '今'
+    }
+    return index
+  }
+  const renderSelect = (index) => {
+    if (value == index) {
+      return 'day-select'
+    }
+    return ''
+  }
+
+  const onDayItemClick = (index) => {
+    setValue(index)
+  }
+
   // const src = '../../images/JBPhoto/luanchun.jpg'
   return (<View className="calendar">
     <View className={'calendar-header'}>
       <Space align={'center'} justify={'center'}>
         <ArrowLeft size={14} onClick={() => onAClick('left')} />
-        <View>{currentDate.format('YYYY年MM月')}</View>
+        <View>{currentDate.format('YYYY.MM')}</View>
         <ArrowRight size={14} onClick={() => onAClick('right')} />
       </Space>
 
@@ -56,11 +75,10 @@ export default function MyCalendar() {
           <View key={index} className="empty-day"></View>
         ))}
         {[...Array(daysInMonth)].map((_, index) => (
-          <View className={`day-item `}>
-            {/* <View key={index} className={`day-num ${renderDayNow(index)}`}> */}
-            {index + 1}
-
-            {/* </View> */}
+          <View className={`day-item `} onClick={() => onDayItemClick(index + 1)}>
+            <View key={index} className={`day-num ${renderSelect(index + 1)}`}>
+              {renderDayNow2(index + 1)}
+            </View>
             {/* <Image src={src} height={80} /> */}
           </View>
 

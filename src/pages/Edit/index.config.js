@@ -1,4 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: '日历',
+  navigationBarTitleText: '编辑拼场信息',
   // "usingComponents": {}
 })

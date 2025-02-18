@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Text } from '@tarojs/components'
 import { Form, Input, Radio, DatePicker, Cell, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
 import { mdm0001 } from '../../common/index'
@@ -6,13 +6,26 @@ import { Checklist, ArrowRight } from '@nutui/icons-react-taro'
 import Taro from '@tarojs/taro';
 import moment from 'moment'
 import './index.less'
+import { getConstData } from './api'
 
 const list = mdm0001[0].mdm000102
 const options = list.map((l, i) => ({ text: l, value: l }))
 const optionsDramaList = [{ text: '流氓叙事', value: '流氓叙事' }]
 console.log(options)
 
-function Add() {
+function Edit() {
+
+  const fetchConstData = async () => {
+    const { res } = await getConstData()
+    console.log(res)
+  }
+
+
+  useEffect(() => {
+    fetchConstData()
+  }, [])
+
+
   const [form] = Form.useForm()
 
   const [checked] = useState(false)
@@ -60,7 +73,7 @@ function Add() {
         <Form
           form={form}
           onFinish={(values) => submitSucceed(values)}
-          style={{ '--nutui-form-item-label-width': '120px' }}
+          style={{ '--nutui-form-item-label-width': '80px' }}
           footer={
             <div
               style={{
@@ -77,6 +90,9 @@ function Add() {
               </Button>
             </div>
           }
+          initialValues={{
+            is_full: false
+          }}
         >
           <Form.Item label="日期" name="date" onClick={() => setShow(true)} rules={[
             { required: true, message: '请选择日期' },
@@ -198,4 +214,4 @@ function Add() {
   )
 }
 
-export default Add
+export default Edit

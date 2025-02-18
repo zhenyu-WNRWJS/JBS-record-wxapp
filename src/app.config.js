@@ -4,7 +4,8 @@ export default defineAppConfig({
     'pages/Add/index',
     'pages/List/index',
     'pages/My/index',
-    'pages/History/index'
+    'pages/History/index',
+    'pages/Edit/index'
   ],
   window: {
     backgroundTextStyle: 'light',

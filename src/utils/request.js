@@ -2,6 +2,8 @@
 import Taro from '@tarojs/taro';
 
 export const API_BASE_URL = 'http://localhost:3000';
+// export const API_BASE_URL = 'http://192.168.11.136';
+//http://192.168.11.136/
 
 const request = (options) => {
   console.log(options)
@@ -13,7 +15,8 @@ const request = (options) => {
     data,
     header: {
       'Content-Type': 'application/json',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      // mode: ''
     }
   }).then(res => {
     return res.data;
