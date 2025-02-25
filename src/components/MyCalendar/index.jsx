@@ -2,64 +2,86 @@ import './index.less'
 import { View } from '@tarojs/components'
 import moment from 'moment'
 import { ArrowLeft, ArrowRight } from '@nutui/icons-react-taro'
-import { Space, Button, Image } from '@nutui/nutui-react-taro'
-import { useState } from 'react'
-import src from '../../images/JBPhoto/luanchun.jpg'
+import { Space, DatePicker, Image } from '@nutui/nutui-react-taro'
+import { useState, useEffect, useMemo } from 'react'
 
 const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-export default function MyCalendar() {
-  // const currentDate = moment();
-  // const daysInMonth = currentDate.daysInMonth(); // 获取当前月份的天数
-  // const firstDayOfWeek = currentDate.startOf('month').day(); // 获取当前月份第一天是星期几
-  // const currentDayofMonth = moment().date()
-  const [value, setValue] = useState(moment().date())
+export default function MyCalendar({ date, onChange, selectDay, onSelectDayChange, leftExtraNode, RightExtraNode, images }) {
+  // console.log(images)
+  const renderExtraNode = (type) => {
+    if (leftExtraNode && type == 'left')
+      return leftExtraNode()
+    if (RightExtraNode && type == 'right')
+      return RightExtraNode()
+    return <View style={{ width: '66px' }}></View>
+  }
 
-  const [currentDate, setCurrentDate] = useState(moment());
-  const daysInMonth = currentDate.daysInMonth(); // 获取当前月份的天数
-  const firstDayOfWeek = currentDate.startOf('month').day(); // 获取当前月份第一天是星期几
-  const currentDayOfMonth = moment().date(); // 获取当前是本月的第几天
+  const daysInMonth = useMemo(() => {
+    return moment(date).daysInMonth()  // 获取当前月份的天数
+  }, [date])
+  const firstDayOfWeek = useMemo(() => {
+    return moment(date).startOf('month').day()  // 获取当前月份第一天是星期几
+  }, [date])
+
+  // const currentDayOfMonth = moment().date(); // 获取当前是本月的第几天
+  const renderDayNow = (index) => {
+    const now = moment()
+    const item = images.find((i) => i.key == index)
+    const text = moment(date).format('YYYY-MM') == now.format('YYYY-MM') && moment().date() == index ? '今' : index
+    return <View className={'item-url-content'}>
+      <View className={'item-url-num'}>{text}</View>
+      {item && <Image src={item.url} width={'100%'} height={'100%'} mode={'aspectFill'} style={{ borderRadius: '10px' }} />}
+    </View>
+
+  }
+  const renderSelect = (index) => selectDay == index ? 'day-select' : ''
+
+  const onDayItemClick = (index) => onSelectDayChange(index)
+
+  useEffect(() => {
+    if (date) {
+      setDesc(`${date.getFullYear()}.${date.getMonth() + 1}`)
+    }
+  }, [date])
+
+  const [desc, setDesc] = useState('')
+  const [show, setShow] = useState(false)
+
+  const onDateConfirm = (options, values) => {
+    const v = values.join('/')
+    onChange(new Date(v))
+  }
 
   const onAClick = (type) => {
     if (type == 'left') {
-      setCurrentDate(currentDate.clone().subtract(1, 'month'));
+      onChange(new Date(moment(date).subtract(1, 'month').format('YYYY-MM')));
     }
     if (type == 'right') {
-      setCurrentDate(currentDate.clone().add(1, 'month'));
+      onChange(new Date(moment(date).add(1, 'month').format('YYYY-MM')));
     }
-  }
-  const renderDayNow = (index) => {
-    const now = moment()
-    if (currentDate.format('YYYY-MM') == now.format('YYYY-MM') && currentDayOfMonth == index + 1) {
-      return 'day-now'
-    }
-    return ''
-  }
-  const renderDayNow2 = (index) => {
-    const now = moment()
-    if (currentDate.format('YYYY-MM') == now.format('YYYY-MM') && currentDayOfMonth == index) {
-      return '今'
-    }
-    return index
-  }
-  const renderSelect = (index) => {
-    if (value == index) {
-      return 'day-select'
-    }
-    return ''
   }
 
-  const onDayItemClick = (index) => {
-    setValue(index)
-  }
-
-  // const src = '../../images/JBPhoto/luanchun.jpg'
   return (<View className="calendar">
     <View className={'calendar-header'}>
+      {renderExtraNode('left')}
       <Space align={'center'} justify={'center'}>
-        <ArrowLeft size={14} onClick={() => onAClick('left')} />
-        <View>{currentDate.format('YYYY.MM')}</View>
-        <ArrowRight size={14} onClick={() => onAClick('right')} />
+        <ArrowLeft size={16} onClick={() => onAClick('left')} />
+        <View onClick={() => setShow(true)}>{desc}</View>
+        <DatePicker
+          type="year-month"
+          title="日期选择"
+          visible={show}
+          defaultValue={new Date(`${moment().format('YYYY-MM')}`)}
+          value={date}
+          showChinese
+          onClose={() => setShow(false)}
+          threeDimensional={false}
+          onConfirm={(options, values) => onDateConfirm(options, values)}
+        />
+
+        <ArrowRight size={16} onClick={() => onAClick('right')} />
       </Space>
+      {renderExtraNode('right')}
 
     </View>
     <View className={'calendar-main'}>
@@ -77,9 +99,8 @@ export default function MyCalendar() {
         {[...Array(daysInMonth)].map((_, index) => (
           <View className={`day-item `} onClick={() => onDayItemClick(index + 1)}>
             <View key={index} className={`day-num ${renderSelect(index + 1)}`}>
-              {renderDayNow2(index + 1)}
+              {renderDayNow(index + 1)}
             </View>
-            {/* <Image src={src} height={80} /> */}
           </View>
 
         ))}

@@ -6,16 +6,16 @@ import { formateDayOfWeek } from '../../utils/index'
 import { Alarm, Order, Shop, Del } from '@nutui/icons-react-taro'
 import Taro from '@tarojs/taro';
 
-export default function MyMatchList({ dataSource }) {
+export default function MyMatchList({ dataSource, actionDel }) {
 
   const onDivNodeClick = (text, item) => {
     if (text == '编辑') {
       Taro.navigateTo({
-        url: `/pages/Edit/index?id=${item.id}`
+        url: `/pages/Edit/index?id=${item._id}`
       })
     }
     if (text == '删除') {
-
+      actionDel(item._id)
     }
   }
 
@@ -88,18 +88,12 @@ export default function MyMatchList({ dataSource }) {
             <View className={"list-item-middle-content"}>
               <View className={'shop-name'}>
                 <Shop size={12} style={{ marginRight: 2 }} />
-                {d.shop_name}
+                {d.shopName}
               </View>
               <Space>
-                {d.missing_roles.map((m) =>
+                {d.missingRoles.map((m) =>
                   <Tag type="info">{m}</Tag>)}
               </Space>
-              {/* {d.missing_roles.length > 0 ?
-              <Space>
-                {d.missing_roles.map((m) =>
-                  <Tag type="info">{m}</Tag>)}
-              </Space> :
-              <Tag type="primary">满</Tag>} */}
 
             </View>
             <View className={'list-item-content'}>

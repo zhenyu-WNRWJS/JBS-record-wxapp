@@ -3,61 +3,73 @@ import { View } from '@tarojs/components'
 import { Button, Tabs, } from '@nutui/nutui-react-taro'
 import moment from 'moment'
 import { formateDayOfWeek } from '../../utils/index'
-import './index.less'
 import MyMatchList from '../../components/MyMatchList'
-import Taro from '@tarojs/taro';
-import { getMockList } from './api'
+import Taro, { useDidShow } from '@tarojs/taro';
+import { fieldReq } from '../../common/index'
+import './index.less'
 
-// const old_dataSource = [
-//   {
-//     is_full: false,
-//     comment: "各补贴100",
-//     date: "2025-02-15 12:00",
-//     drama: ["流氓叙事"],
-//     missing_roles: ["缪宏谟", "以撒"],
-//     role: ["程聿怀"],
-//     shop_name: "momo",
-//   },
-//   {
-//     is_full: false,
-//     comment: "阮哲带人",
-//     date: "2025-02-23 12:00",
-//     drama: ["牧神午后"],
-//     missing_roles: ["阮哲", "央拉", '达瓦', '炬'],
-//     role: ["换青"],
-//     shop_name: "有点猫腻",
-//   },
-//   {
-//     is_full: true,
-//     comment: "",
-//     date: "2025-02-28 12:00",
-//     drama: ["乱春"],
-//     missing_roles: [],
-//     role: ["颜无依"],
-//     shop_name: "有点猫腻",
-//   }
-// ]
 const marginStyle = { margin: '0 auto' }
 function List() {
+
+  const [db] = useState(wx.cloud.database())
+  const _ = db.command;
 
   const [dataSource, setDataSource] = useState([])
   const [oldDataSource, setOldDataSource] = useState([])
   const [tab2value, setTab2value] = useState('0')
 
-  const fetchListData = async () => {
-    const res = await getMockList()
-    console.log(res)
-    setDataSource(res.data)
-    setOldDataSource(res.data)
+  const fetchListData = async (tab2value) => {
+    db.collection('sessionInfo').where({
+      date: _.gte(moment().startOf('day').toDate())
+      // _openid: 'user-open-id',
+      // 'style.color': 'yellow'
+    }).field(fieldReq).get({
+      success: function (res) {
+        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
+        // console.log('res.data', res.data)
+
+        if (tab2value === 0) {
+          setDataSource(oldDataSource)
+        } else if (tab2value === 1) {
+          setDataSource(oldDataSource.filter((d) => d.missingRoles.length > 0))
+        } else if (tab2value === 2) {
+          setDataSource(oldDataSource.filter((d) => d.missingRoles.length == 0))
+        } else {
+          setDataSource(res.data)
+          setOldDataSource(res.data)
+        }
+      }
+    })
   };
-  useEffect(() => {
-    fetchListData()
-  }, [])
+
+  const delListData = (id) => {
+    db.collection('sessionInfo').doc(id).remove({
+      success: function (res) {
+        console.log(res.data)
+        Taro.showToast({
+          title: '删除成功',
+          icon: 'success',
+          duration: 2000,
+          success: () => {
+            fetchListData(tab2value)
+          }
+        })
+      }
+    })
+  }
+
+  // useEffect(() => {
+  //   fetchListData()
+  // }, [])
+
+  useDidShow(() => {
+    fetchListData(tab2value)
+  })
 
   const onBtnClick = () => {
     let data = ``
     dataSource.map((d, i) => {
-      data += `🆘 ${moment(d.date).format('MM-DD hh:ss')} ${formateDayOfWeek(moment(d.date).day())} ${d.shop_name} = ${d.missing_roles.join('+')} (${d.comment})`
+      data += `🆘 ${moment(d.date).format('MM-DD hh:ss')} ${formateDayOfWeek(moment(d.date).day())} ${d.shopName} = ${d.missingRoles.join('+')} (${d.comment})`
       if (i + 1 < dataSource.length) {
         data += `\n`
       }
@@ -78,18 +90,18 @@ function List() {
         if (value === 0) {
           setDataSource(oldDataSource)
         } else if (value === 1) {
-          setDataSource(oldDataSource.filter((d) => d.is_full === false))
+          setDataSource(oldDataSource.filter((d) => d.missingRoles.length > 0))
         } else {
-          setDataSource(oldDataSource.filter((d) => d.is_full === true))
+          setDataSource(oldDataSource.filter((d) => d.missingRoles.length == 0))
         }
-        console.log(value)
+        // console.log(value)
         setTab2value(value)
       }}
       activeType={'card'}
     >
       <Tabs.TabPane title="全部">
         <View className={'match-list'}>
-          <MyMatchList dataSource={dataSource} />
+          <MyMatchList dataSource={dataSource} actionDel={delListData}/>
         </View>
       </Tabs.TabPane>
       <Tabs.TabPane title="在拼">

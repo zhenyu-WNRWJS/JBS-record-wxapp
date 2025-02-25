@@ -6,5 +6,19 @@
     "urlCheck": false,
     "useIsolateContext": true,
     "bigPackageSizeSupport": true
+  },
+  "libVersion": "3.7.7",
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "pages/Edit/index",
+          "pathName": "pages/Edit/index",
+          "query": "id=49f92c5267bd67f10004f85b1aadc91c",
+          "launchMode": "default",
+          "scene": null
+        }
+      ]
+    }
   }
 }

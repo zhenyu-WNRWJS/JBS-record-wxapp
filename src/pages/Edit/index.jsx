@@ -1,42 +1,83 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text } from '@tarojs/components'
+import { View } from '@tarojs/components'
 import { Form, Input, Radio, DatePicker, Cell, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
-import { mdm0001 } from '../../common/index'
 import { Checklist, ArrowRight } from '@nutui/icons-react-taro'
 import Taro from '@tarojs/taro';
+import { fieldReq } from '../../common/index'
 import moment from 'moment'
 import './index.less'
-import { getConstData } from './api'
 
-const list = mdm0001[0].mdm000102
-const options = list.map((l, i) => ({ text: l, value: l }))
-const optionsDramaList = [{ text: '流氓叙事', value: '流氓叙事' }]
-console.log(options)
+const defaultValue = new Date()
+const defaultDescription = `${defaultValue.getFullYear()}-${defaultValue.getMonth() + 1
+  }-${defaultValue.getDate()}`
 
 function Edit() {
-
-  const fetchConstData = async () => {
-    const { res } = await getConstData()
-    console.log(res)
-  }
-
-
-  useEffect(() => {
-    fetchConstData()
-  }, [])
-
-
+  const [router] = useState(Taro.getCurrentInstance().router.params)
+  const id = router.id
+  const [db] = useState(wx.cloud.database())
   const [form] = Form.useForm()
-
   const [checked] = useState(false)
   const [show, setShow] = useState(false)
+  const [dramaList, setDramaList] = useState([])
+  const [roleList, setRoleList] = useState([])
+  const [missingRoles, setMissingRoles] = useState([])
 
-  const defaultValue = new Date()
-  const defaultDescription = `${defaultValue.getFullYear()}-${defaultValue.getMonth() + 1
-    }-${defaultValue.getDate()}`
+  useEffect(() => {
+    fetchDramaInfo()
+  }, [])
+
+  const fetchSessionInfo = (list) => {
+    db.collection('sessionInfo').doc(id).field({ ...fieldReq, isFull: true, _id: false }).get({
+      success: function (res) {
+        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
+        // console.log(res.data)
+        const drama = res.data.drama[0]
+        const item = list.find((l) => l.value == drama)
+        setRoleList(item.roles.map((o) => ({ text: o, value: o })))
+        setMissingRoles(item.roles)
+
+        form.setFieldsValue({
+          ...res.data,
+          isFull: res.data.missingRoles.length == 0,
+          date: moment(res.data.date).format('YYYY-MM-DD hh:mm')
+        })
+      }
+    })
+  }
+
+  const fetchDramaInfo = async () => {
+    db.collection('dramaInfo').get({
+      success: function (res) {
+        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
+        // console.log(res.data)
+        const list = res.data.map((r) => ({ text: r.name, value: r.name, roles: r.roles }))
+        setDramaList(list)
+        fetchSessionInfo(list)
+      }
+    })
+  };
 
   const submitSucceed = (values) => {
-    console.log(values)
+    db.collection('sessionInfo').doc(id).update({
+      // data 传入需要局部更新的数据
+      data: {
+        // 表示将 done 字段置为 true
+        ...values,
+        date: new Date(values.date),
+        isFull: values.missingRoles.length == 0
+      },
+      success: function (res) {
+        console.log(res.data)
+        Taro.showToast({
+          title: '编辑拼场成功',
+          icon: 'success',
+          duration: 2000,
+          success: () => {
+            Taro.navigateBack()
+          }
+        })
+      }
+    })
   }
 
   const onDateConfirm = (values, options) => {
@@ -46,24 +87,25 @@ function Edit() {
   }
 
   const onDramaConfirm = (options, value) => {
-    console.log(options, value)
+    // console.log(options, value, options[0].roles)
     form.setFieldsValue({
-      missing_roles: []
+      missingRoles: []
     })
+    setRoleList(options[0].roles.map((o) => ({ text: o, value: o })))
+    setMissingRoles(options[0].roles)
   }
 
   const onRoleConfirm = (options, value) => {
-    console.log(options, value)
-    // const flag = (form.getFieldValue('missing_roles') ?? []).findIndex((i)=>i == va)
-    const new_missing_roles = (form.getFieldValue('missing_roles') ?? []).filter((i) => i != value)
+    // console.log(options, value)
+    const newMissingRoles = (form.getFieldValue('missingRoles') ?? []).filter((i) => i != value)
     form.setFieldsValue({
-      missing_roles: new_missing_roles
+      missingRoles: newMissingRoles
     })
   }
 
   const onSwitchChange = (value) => {
     form.setFieldsValue({
-      missing_roles: []
+      missingRoles: []
     })
   }
 
@@ -73,7 +115,7 @@ function Edit() {
         <Form
           form={form}
           onFinish={(values) => submitSucceed(values)}
-          style={{ '--nutui-form-item-label-width': '80px' }}
+          style={{ '--nutui-form-item-label-width': '120px' }}
           footer={
             <div
               style={{
@@ -90,9 +132,6 @@ function Edit() {
               </Button>
             </div>
           }
-          initialValues={{
-            is_full: false
-          }}
         >
           <Form.Item label="日期" name="date" onClick={() => setShow(true)} rules={[
             { required: true, message: '请选择日期' },
@@ -109,7 +148,7 @@ function Edit() {
             onClose={() => setShow(false)}
             onConfirm={(options, values) => onDateConfirm(values, options)}
           />
-          <Form.Item label="店铺" name="shop_name" rules={[
+          <Form.Item label="店铺" name="shopName" rules={[
             { required: true, message: '请输入店铺名称' },
           ]}>
             <Input placeholder="请输入店铺名称" type="text" />
@@ -129,11 +168,11 @@ function Edit() {
           >
             <Picker
               title="请选择剧本"
-              options={optionsDramaList}
+              options={dramaList}
               onConfirm={onDramaConfirm}
             >
               {(values) => <Input value={values.length
-                ? optionsDramaList.filter((po) => po.value === values[0])[0]
+                ? dramaList.filter((po) => po.value === values[0])[0]
                   ?.text
                 : ''} placeholder="请选择剧本" type="text" readOnly />}
             </Picker>
@@ -153,30 +192,30 @@ function Edit() {
           >
             <Picker
               title="请选择所玩角色"
-              options={options}
+              options={roleList}
               onConfirm={onRoleConfirm}
             >
               {(values) => <Input value={values.length
-                ? options.filter((po) => po.value === values[0])[0]
+                ? roleList.filter((po) => po.value === values[0])[0]
                   ?.text
                 : ''} placeholder="请选择角色" type="text" readOnly />}
             </Picker>
           </Form.Item>
-          <Form.Item label="是否满车" name="is_full" valuePropName="checked">
+          <Form.Item label="是否满车" name="isFull" valuePropName="checked">
             <Switch onChange={onSwitchChange} />
           </Form.Item>
           <Form.Item shouldUpdate noStyle>
             {({ getFieldValue }) => {
-              const is_full = getFieldValue('is_full')
-              if (is_full) return null
+              const isFull = getFieldValue('isFull')
+              if (isFull) return null
               return (
-                <Form.Item label="缺少角色" name="missing_roles">
+                <Form.Item label="缺少角色" name="missingRoles">
                   <Checkbox.Group direction={'horizontal'}>
                     {
-                      list.map((l) => <Checkbox
+                      missingRoles.map((l) => <Checkbox
                         disabled={form.getFieldValue('role') == l}
                         value={l}
-                        style={{ marginInlineEnd: '8px' }}
+                        style={{ marginInlineEnd: '8px', minWidth: '74px' }}
                         shape="button"
                         activeIcon={
                           <Checklist className="nut-checkbox-button-icon-checked" />
