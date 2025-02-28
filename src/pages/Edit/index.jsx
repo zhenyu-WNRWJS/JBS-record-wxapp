@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { View } from '@tarojs/components'
-import { Form, Input, Radio, DatePicker, Cell, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
+import { Form, Input, Dialog, DatePicker, SearchBar, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
 import { Checklist, ArrowRight } from '@nutui/icons-react-taro'
 import Taro from '@tarojs/taro';
+import MySearchBar from '../../components/MySearchBar'
 import { fieldReq } from '../../common/index'
 import moment from 'moment'
 import './index.less'
@@ -18,56 +19,60 @@ function Edit() {
   const [form] = Form.useForm()
   const [checked] = useState(false)
   const [show, setShow] = useState(false)
-  const [dramaList, setDramaList] = useState([])
   const [roleList, setRoleList] = useState([])
   const [missingRoles, setMissingRoles] = useState([])
 
   useEffect(() => {
-    fetchDramaInfo()
+    fetchSessionInfo()
   }, [])
 
-  const fetchSessionInfo = (list) => {
+  const fetchSessionInfo = () => {
     db.collection('sessionInfo').doc(id).field({ ...fieldReq, isFull: true, _id: false }).get({
       success: function (res) {
         // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        // console.log(res.data)
-        const drama = res.data.drama[0]
-        const item = list.find((l) => l.value == drama)
-        setRoleList(item.roles.map((o) => ({ text: o, value: o })))
-        setMissingRoles(item.roles)
-
+        console.log(res.data)
         form.setFieldsValue({
           ...res.data,
           isFull: res.data.missingRoles.length == 0,
-          date: moment(res.data.date).format('YYYY-MM-DD hh:mm')
+          date: moment(res.data.date).format('YYYY-MM-DD HH:mm')
         })
-      }
+        fetchDramaInfo(res.data.drama)
+      },
     })
   }
 
-  const fetchDramaInfo = async () => {
-    db.collection('dramaInfo').get({
+  const fetchDramaInfo = async (term) => {
+    db.collection('dramaInfo').where({
+      name: new RegExp(term, 'i') // 模糊匹配 name 字段
+    }).get({
       success: function (res) {
         // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        // console.log(res.data)
-        const list = res.data.map((r) => ({ text: r.name, value: r.name, roles: r.roles }))
-        setDramaList(list)
-        fetchSessionInfo(list)
+        console.log(res.data)
+        const item = res.data[0]
+        setRoleList(item.roles.map((o) => ({ text: o, value: o })))
+        setMissingRoles(item.roles)
       }
-    })
+    });
   };
 
-  const submitSucceed = (values) => {
-    db.collection('sessionInfo').doc(id).update({
-      // data 传入需要局部更新的数据
-      data: {
-        // 表示将 done 字段置为 true
-        ...values,
-        date: new Date(values.date),
-        isFull: values.missingRoles.length == 0
-      },
-      success: function (res) {
-        console.log(res.data)
+  const submitSucceed = async (values) => {
+    try {
+      const result = await Taro.cloud.callFunction({
+        name: 'updateSession',
+        data: {
+          params: {
+            ...values,
+            date: new Date(values.date),
+            isFull: values.missingRoles.length == 0
+          },
+          id,
+        },
+      })
+      if (result.result.error) {
+        console.error('云函数调用失败', result.result.error)
+      } else {
+        const data = result.result.data
+        // console.log(res.data)
         Taro.showToast({
           title: '编辑拼场成功',
           icon: 'success',
@@ -77,22 +82,29 @@ function Edit() {
           }
         })
       }
-    })
+    } catch (err) {
+      console.error('云函数调用失败', err)
+    }
+
+
+    // db.collection('sessionInfo').doc(id).update({
+    //   // data 传入需要局部更新的数据
+    //   data: {
+    //     // 表示将 done 字段置为 true
+    //     ...values,
+    //     date: new Date(values.date),
+    //     isFull: values.missingRoles.length == 0
+    //   },
+    //   success: function (res) {
+
+    //   }
+    // })
   }
 
   const onDateConfirm = (values, options) => {
     const date = values.slice(0, 3).join('-')
     const time = values.slice(3).join(':')
     form.setFieldValue('date', `${date} ${time}`)
-  }
-
-  const onDramaConfirm = (options, value) => {
-    // console.log(options, value, options[0].roles)
-    form.setFieldsValue({
-      missingRoles: []
-    })
-    setRoleList(options[0].roles.map((o) => ({ text: o, value: o })))
-    setMissingRoles(options[0].roles)
   }
 
   const onRoleConfirm = (options, value) => {
@@ -108,7 +120,14 @@ function Edit() {
       missingRoles: []
     })
   }
-
+  const [visible, setVisible] = useState(false)
+  const onSearchBarChange = (value, item) => {
+    form.setFieldsValue({
+      missingRoles: []
+    })
+    setRoleList(item.roles.map((o) => ({ text: o, value: o })))
+    setMissingRoles(item.roles)
+  }
   return (
     <View className={'add'}>
       <View className={'form'}>
@@ -156,27 +175,19 @@ function Edit() {
           <Form.Item
             label="剧本名"
             name="drama"
-            trigger="onConfirm"
-            onClick={(event, ref) => {
-              ref.open()
-            }}
-            getValueFromEvent={(...args) => args[1]}
             rules={[
               { required: true, message: '请选择剧本' },
             ]}
-            validateTrigger={['onChange', 'onConfirm']}
+            onClick={() => setVisible(true)}
           >
-            <Picker
-              title="请选择剧本"
-              options={dramaList}
-              onConfirm={onDramaConfirm}
-            >
-              {(values) => <Input value={values.length
-                ? dramaList.filter((po) => po.value === values[0])[0]
-                  ?.text
-                : ''} placeholder="请选择剧本" type="text" readOnly />}
-            </Picker>
+            <MySearchBar
+              visible={visible}
+              setVisible={setVisible}
+              placeholder={"请选择剧本"}
+              onChange={onSearchBarChange}
+            />
           </Form.Item>
+
           <Form.Item
             label="所玩角色"
             name="role"

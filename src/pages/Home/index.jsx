@@ -4,7 +4,9 @@ import { Avatar } from '@nutui/nutui-react-taro'
 import MyCalendar from '../../components/MyCalendar'
 import MyHomeCardList from '../../components/MyHomeCardList'
 import { fieldReq } from '../../common/index'
+import Taro, { useDidShow } from '@tarojs/taro';
 import moment from 'moment'
+import { useUpdateEffect } from 'ahooks';
 import './index.less'
 
 function Add() {
@@ -13,7 +15,7 @@ function Add() {
   const [filterDataSource, setFilterDataSource] = useState([])
   const [date, setDate] = useState(new Date())
   const [selectDay, setSelectDay] = useState(new Date().getDate())
-
+  const DD = (selectDay + '').length == 1 ? `0${selectDay}` : selectDay
   const onJinClick = () => {
     onDateChange(new Date())
     onSelectDayChange(moment().date())
@@ -23,40 +25,47 @@ function Add() {
 
   const RightExtraNode = () => <View className={'right-extra-node'}>
     <View class="iconfont iconjin" onClick={onJinClick}></View>
-    <View className={"avatar"}><Avatar size={'small'}>N</Avatar></View>
+    {/* <View className={"avatar"}><Avatar size={'small'}>N</Avatar></View> */}
   </View>
 
-  const [db] = useState(wx.cloud.database())
-  const _ = db.command;
-
   const fetchListData = async () => {
-    const startOfMonth = moment(date).startOf('month').toDate();
-    const endOfMonth = moment(date).endOf('month').toDate();
-    db.collection('sessionInfo').where({
-      date: _.gte(startOfMonth).and(_.lte(endOfMonth))
-      // _openid: 'user-open-id',
-      // 'style.color': 'yellow'
-    }).field(fieldReq).get({
-      success: function (res) {
-        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        // console.log('res.data', res.data)
-        setDataSource(res.data)
-        setFilterDataSource(res.data.filter((d) => moment(d.date).format('YYYY-MM-DD') == `${moment(date).format('YYYY-MM')}-${selectDay}`))
-      }
-    })
-  };
+    const limit = 100 // 设置每次查询返回的记录数为100
 
-  useEffect(() => {
+    try {
+      const result = await Taro.cloud.callFunction({
+        name: 'fetchHomeData',
+        data: {
+          date: date,
+          fieldReq: fieldReq,
+          limit: limit
+        }
+      })
+      if (result.result.error) {
+        console.error('云函数调用失败', result.result.error)
+      } else {
+        const data = result.result.data
+        setDataSource(data)
+        setFilterDataSource(data.filter((d) => moment(d.date).format('YYYY-MM-DD') == `${moment(date).format('YYYY-MM')}-${DD}`))
+      }
+    } catch (err) {
+      console.error('云函数调用失败', err)
+    }
+  }
+
+  useDidShow(() => {
     fetchListData()
+  })
+
+  useUpdateEffect(() => {
+    // fetchListData()
   }, [moment(date).format('YYYY-MM')])
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (selectDay) {
-      setFilterDataSource(dataSource.filter((d) => moment(d.date).format('YYYY-MM-DD') == `${moment(date).format('YYYY-MM')}-${selectDay}`))
+      setFilterDataSource(dataSource.filter((d) => moment(d.date).format('YYYY-MM-DD') == `${moment(date).format('YYYY-MM')}-${DD}`))
     }
   }, [selectDay])
 
-  // console.log(`${moment(date).format('YYYY-MM')}-${selectDay}`)
   return (
     <View className='home'>
       <View className="home-top">

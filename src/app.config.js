@@ -3,8 +3,6 @@ export default defineAppConfig({
     'pages/Home/index',
     'pages/Add/index',
     'pages/List/index',
-    'pages/My/index',
-    'pages/History/index',
     'pages/Edit/index'
   ],
   window: {

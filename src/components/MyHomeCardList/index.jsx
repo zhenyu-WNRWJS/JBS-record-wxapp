@@ -4,23 +4,28 @@ import moment from 'moment'
 import { Space, Tag, Image, Divider } from '@nutui/nutui-react-taro'
 import { formateDayOfWeek } from '../../utils/index'
 import { Alarm, Order, Shop, Del } from '@nutui/icons-react-taro'
-// import Taro from '@tarojs/taro';
-import src from '../../images/JBPhoto/luanchun.jpg'
 
 export default function MyHomeCardList({ dataSource }) {
+
+  const onHomeListItemLongClick = (item) => {
+    console.log('item',item)
+    Taro.navigateTo({
+      url: `/pages/Edit/index?id=${item._id}`
+    })
+  }
 
   return (<View className={'jb-list'}>
     {
       dataSource.map((d) => (
-        <View className={'jb-list-item'}  >
-          <Image src={'cloud://jubenxiaoji-cloud-2el1jd41012861.6a75-jubenxiaoji-cloud-2el1jd41012861-1306694658/luanchun.jpg'} width={74} mode={'widthFix'} />
+        <View className={'jb-list-item'} on onLongClick={() => onHomeListItemLongClick(d)} >
+          <Image src={d.url} width={74} mode={'widthFix'} />
           <Divider direction="vertical" style={{ height: '100%' }} />
           <View className={'list-item-box'}>
             <View className={'list-item-header'}>
               <View className={'title'}>
                 <View className={'date'}>
                   <View className={'time'}>
-                    {moment(d.date).format('MM-DD hh:ss')}
+                    {moment(d.date).format('MM-DD HH:ss')}
                   </View>
                   <View className={'weekday'}>{formateDayOfWeek(moment(d.date).day())}</View>
                 </View>

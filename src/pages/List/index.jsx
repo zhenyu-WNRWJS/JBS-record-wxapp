@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { View } from '@tarojs/components'
-import { Button, Tabs, } from '@nutui/nutui-react-taro'
+import { Button, Tabs } from '@nutui/nutui-react-taro'
 import moment from 'moment'
 import { formateDayOfWeek } from '../../utils/index'
 import MyMatchList from '../../components/MyMatchList'
@@ -11,41 +11,47 @@ import './index.less'
 const marginStyle = { margin: '0 auto' }
 function List() {
 
-  const [db] = useState(wx.cloud.database())
-  const _ = db.command;
-
   const [dataSource, setDataSource] = useState([])
   const [oldDataSource, setOldDataSource] = useState([])
   const [tab2value, setTab2value] = useState('0')
 
   const fetchListData = async (tab2value) => {
-    db.collection('sessionInfo').where({
-      date: _.gte(moment().startOf('day').toDate())
-      // _openid: 'user-open-id',
-      // 'style.color': 'yellow'
-    }).field(fieldReq).get({
-      success: function (res) {
-        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        // console.log('res.data', res.data)
+    const limit = 100 // 设置每次查询返回的记录数为100
 
-        if (tab2value === 0) {
-          setDataSource(oldDataSource)
-        } else if (tab2value === 1) {
-          setDataSource(oldDataSource.filter((d) => d.missingRoles.length > 0))
-        } else if (tab2value === 2) {
-          setDataSource(oldDataSource.filter((d) => d.missingRoles.length == 0))
-        } else {
-          setDataSource(res.data)
-          setOldDataSource(res.data)
+    try {
+      const result = await Taro.cloud.callFunction({
+        name: 'fetchListData',
+        data: {
+          tab2value,
+          fieldReq: fieldReq,
+          limit: limit
         }
+      })
+      if (result.result.error) {
+        console.error('云函数调用失败', result.result.error)
+      } else {
+        const data = result.result.dataSource
+        setOldDataSource(data)
+        setDataSource(data)
       }
-    })
-  };
+    } catch (err) {
+      console.error('云函数调用失败', err)
+    }
+  }
 
-  const delListData = (id) => {
-    db.collection('sessionInfo').doc(id).remove({
-      success: function (res) {
-        console.log(res.data)
+  const delListData = async (id) => {
+    try {
+      const result = await Taro.cloud.callFunction({
+        name: 'deleteSession',
+        data: {
+          id,
+        },
+      })
+      if (result.result.error) {
+        console.error('云函数调用失败', result.result.error)
+      } else {
+        const data = result.result.data
+        // console.log(res.data)
         Taro.showToast({
           title: '删除成功',
           icon: 'success',
@@ -55,7 +61,24 @@ function List() {
           }
         })
       }
-    })
+    } catch (err) {
+      console.error('云函数调用失败', err)
+    }
+
+
+    // db.collection('sessionInfo').doc(id).remove({
+    //   success: function (res) {
+    //     console.log(res.data)
+    //     Taro.showToast({
+    //       title: '删除成功',
+    //       icon: 'success',
+    //       duration: 2000,
+    //       success: () => {
+    //         fetchListData(tab2value)
+    //       }
+    //     })
+    //   }
+    // })
   }
 
   // useEffect(() => {
@@ -63,13 +86,18 @@ function List() {
   // }, [])
 
   useDidShow(() => {
+    console.log('显示了')
     fetchListData(tab2value)
   })
+  // F
+  // useDidHide(() => {
+  //   console.log('隐藏了')
+  // })
 
   const onBtnClick = () => {
     let data = ``
     dataSource.map((d, i) => {
-      data += `🆘 ${moment(d.date).format('MM-DD hh:ss')} ${formateDayOfWeek(moment(d.date).day())} ${d.shopName} = ${d.missingRoles.join('+')} (${d.comment})`
+      data += `🆘 ${moment(d.date).format('MM-DD HH:ss')} ${formateDayOfWeek(moment(d.date).day())} ${d.shopName} = ${d.missingRoles.join('+')} ${d.comment ? `(${d.comment})` : ''}`
       if (i + 1 < dataSource.length) {
         data += `\n`
       }
@@ -101,13 +129,13 @@ function List() {
     >
       <Tabs.TabPane title="全部">
         <View className={'match-list'}>
-          <MyMatchList dataSource={dataSource} actionDel={delListData}/>
+          <MyMatchList dataSource={dataSource} actionDel={delListData} />
         </View>
       </Tabs.TabPane>
       <Tabs.TabPane title="在拼">
         <View className={'match-list'}>
           <MyMatchList dataSource={dataSource} />
-          <View>
+          <View className={'btn'}>
             <Button type="primary" style={marginStyle} onClick={onBtnClick}>
               复制拼本信息
             </Button>

@@ -55,20 +55,6 @@ export const footerTabs = [{
     />
   },
 ]
-
-export const mdm0001 = [{
-  name: '流氓叙事',
-  mdm000102: ['程聿怀', '程走柳', '蒋伯驾', '以撒', '缪宏谟', '黛利拉']
-}]
-
-export const pbStatus = [{
-  value: "0",
-  text: '🆘'
-}, {
-  value: "1",
-  text: '🈵'
-}]
-
 export const fieldReq = {
   _id: true,
   comment: true,

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { View } from '@tarojs/components'
-import { Form, Input, Radio, DatePicker, Cell, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
+import { Form, Input, Dialog, DatePicker, Cell, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
 import { Checklist, ArrowRight } from '@nutui/icons-react-taro'
-import Taro from '@tarojs/taro';
+import MySearchBar from '../../components/MySearchBar'
+import Taro, { useDidShow } from '@tarojs/taro';
 import './index.less'
 
 const defaultValue = new Date()
@@ -10,42 +11,31 @@ const defaultDescription = `${defaultValue.getFullYear()}-${defaultValue.getMont
   }-${defaultValue.getDate()}`
 
 function Add() {
-
-  const [db] = useState(wx.cloud.database())
   const [form] = Form.useForm()
   const [checked] = useState(false)
   const [show, setShow] = useState(false)
-  const [dramaList, setDramaList] = useState([])
   const [roleList, setRoleList] = useState([])
   const [missingRoles, setMissingRoles] = useState([])
 
-  useEffect(() => {
-    fetchDramaInfo()
-  }, [])
+  useDidShow(() => {
+    form.resetFields()
+  })
 
-  const fetchDramaInfo = async () => {
-    db.collection('dramaInfo').get({
-      success: function (res) {
-        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        // console.log(res.data)
-        const list = res.data.map((r) => ({ text: r.name, value: r.name, roles: r.roles }))
-        setDramaList(list)
-      }
-    })
-  };
-
-  const submitSucceed = (values) => {
+  const submitSucceed = async (values) => {
     // console.log(values)
-    db.collection('sessionInfo').add({
-      // data 字段表示需新增的 JSON 数据
-      data: {
-        ...values,
-        date: new Date(values.date),
-        isFull: values.missingRoles.length == 0
-      },
-      success: function (res) {
-        // res 是一个对象，其中有 _id 字段标记刚创建的记录的 id
-        // console.log(res)
+    try {
+      const result = await Taro.cloud.callFunction({
+        name: 'addSession',
+        data: {
+          ...values,
+          date: new Date(values.date),
+          isFull: values.missingRoles.length == 0
+        },
+      })
+      if (result.result.error) {
+        console.error('云函数调用失败', result.result.error)
+      } else {
+        const data = result.result.data
         Taro.showToast({
           title: '添加拼场成功',
           icon: 'success',
@@ -55,22 +45,15 @@ function Add() {
         setRoleList([])
         setMissingRoles([])
       }
-    })
+    } catch (err) {
+      console.error('云函数调用失败', err)
+    }
   }
 
   const onDateConfirm = (values, options) => {
     const date = values.slice(0, 3).join('-')
     const time = values.slice(3).join(':')
     form.setFieldValue('date', `${date} ${time}`)
-  }
-
-  const onDramaConfirm = (options, value) => {
-    // console.log(options, value, options[0].roles)
-    form.setFieldsValue({
-      missingRoles: []
-    })
-    setRoleList(options[0].roles.map((o) => ({ text: o, value: o })))
-    setMissingRoles(options[0].roles)
   }
 
   const onRoleConfirm = (options, value) => {
@@ -86,7 +69,14 @@ function Add() {
       missingRoles: []
     })
   }
-
+  const [visible, setVisible] = useState(false)
+  const onSearchBarChange = (value, item) => {
+    form.setFieldsValue({
+      missingRoles: []
+    })
+    setRoleList(item.roles.map((o) => ({ text: o, value: o })))
+    setMissingRoles(item.roles)
+  }
   return (
     <View className={'add'}>
       <View className={'form'}>
@@ -134,26 +124,17 @@ function Add() {
           <Form.Item
             label="剧本名"
             name="drama"
-            trigger="onConfirm"
-            onClick={(event, ref) => {
-              ref.open()
-            }}
-            getValueFromEvent={(...args) => args[1]}
             rules={[
               { required: true, message: '请选择剧本' },
             ]}
-            validateTrigger={['onChange', 'onConfirm']}
+            onClick={() => setVisible(true)}
           >
-            <Picker
-              title="请选择剧本"
-              options={dramaList}
-              onConfirm={onDramaConfirm}
-            >
-              {(values) => <Input value={values.length
-                ? dramaList.filter((po) => po.value === values[0])[0]
-                  ?.text
-                : ''} placeholder="请选择剧本" type="text" readOnly />}
-            </Picker>
+            <MySearchBar
+              visible={visible}
+              setVisible={setVisible}
+              placeholder={"请选择剧本"}
+              onChange={onSearchBarChange}
+            />
           </Form.Item>
           <Form.Item
             label="所玩角色"

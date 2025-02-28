@@ -37,11 +37,12 @@ export default function MyMatchList({ dataSource, actionDel }) {
       </div>
     )
   }
-
+  // return <></>
   return (<View className={'jb-list'}>
     {
       dataSource.map((d) => (
         <Swipe
+          key={d._id}
           className={'jb-list-item'}
           // style={{ height: '104px' }}
           rightAction={
@@ -68,6 +69,7 @@ export default function MyMatchList({ dataSource, actionDel }) {
         >
           <View
           // className={'jb-list-item'}
+
           >
             <View className={'list-item-header'}>
               {/* <View className={'icon'}>{renderIcon(d)}</View> */}
@@ -75,7 +77,7 @@ export default function MyMatchList({ dataSource, actionDel }) {
                 <View className={'date'}>
                   <View className={'time'}>
                     <Alarm size={16} style={{ marginRight: 2 }} />
-                    {moment(d.date).format('MM-DD hh:ss')}
+                    {moment(d.date).format('MM-DD HH:ss')}
                   </View>
                   <View className={'weekday'}>{formateDayOfWeek(moment(d.date).day())}</View>
                 </View>
