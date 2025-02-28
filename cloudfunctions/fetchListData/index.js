@@ -19,22 +19,22 @@ exports.main = async (event, context) => {
   try {
     const res = await db.collection('sessionInfo').where({
       date: _.gte(moment().startOf('day').toDate())
-    }).field(fieldReq).limit(limit).get()
+    }).field(fieldReq).limit(limit).orderBy('date', 'asc').get()
     const res2 = await db.collection('sessionInfo').where({
       date: _.lt(moment().startOf('day').toDate())
-    }).field(fieldReq).limit(limit).get()
+    }).field(fieldReq).limit(limit).orderBy('date', 'asc').get()
     const data = res.data
     const data2 = res2.data
     let dataSource = []
-    if (tab2value === 0) {
-      dataSource = [...data]
-    } else if (tab2value === 1) {
-      dataSource = data.filter((d) => d.missingRoles.length > 0)
-    } else if (tab2value === 2) {
-      dataSource = data.filter((d) => d.missingRoles.length == 0)
-    } else {
-      dataSource = [...data]
-    }
+    // if (tab2value === '0') {
+    dataSource = [...data]
+    // } else if (tab2value === '1') {
+    //   dataSource = data.filter((d) => d.missingRoles.length > 0)
+    // } else if (tab2value === '2') {
+    //   dataSource = data.filter((d) => d.missingRoles.length == 0)
+    // } else {
+    //   dataSource = [...data]
+    // }
     return {
       dataSource: dataSource,
       staleDataSource: data2

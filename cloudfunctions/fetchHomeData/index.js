@@ -41,9 +41,8 @@ exports.main = async (event, context) => {
     date: _.gte(startOfMonth).and(_.lte(endOfMonth)),
     // _openid: wxContext.OPENID,
   }
-  console.log(params)
   try {
-    const res = await db.collection('sessionInfo').where(params).field(fieldReq).limit(limit).get()
+    const res = await db.collection('sessionInfo').where(params).field(fieldReq).limit(limit).orderBy('date', 'asc').get()
     const data = res.data
     const dramaList = data.reduce((pre, cur) => !pre.includes(cur.drama) ? [...pre, cur.drama] : pre, [])
     if (dramaList.length > 0) {

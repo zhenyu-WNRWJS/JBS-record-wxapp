@@ -57,7 +57,7 @@ function Add() {
   })
 
   useUpdateEffect(() => {
-    // fetchListData()
+    fetchListData()
   }, [moment(date).format('YYYY-MM')])
 
   useUpdateEffect(() => {

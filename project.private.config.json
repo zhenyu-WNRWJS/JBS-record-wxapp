@@ -12,6 +12,13 @@
     "miniprogram": {
       "list": [
         {
+          "name": "pages/List/index",
+          "pathName": "pages/List/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
           "name": "pages/Edit/index",
           "pathName": "pages/Edit/index",
           "query": "id=49f92c5267bd67f10004f85b1aadc91c",

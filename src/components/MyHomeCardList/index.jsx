@@ -4,11 +4,12 @@ import moment from 'moment'
 import { Space, Tag, Image, Divider } from '@nutui/nutui-react-taro'
 import { formateDayOfWeek } from '../../utils/index'
 import { Alarm, Order, Shop, Del } from '@nutui/icons-react-taro'
+import Taro, { useDidShow } from '@tarojs/taro';
 
 export default function MyHomeCardList({ dataSource }) {
 
   const onHomeListItemLongClick = (item) => {
-    console.log('item',item)
+    console.log('item', item)
     Taro.navigateTo({
       url: `/pages/Edit/index?id=${item._id}`
     })
@@ -17,7 +18,7 @@ export default function MyHomeCardList({ dataSource }) {
   return (<View className={'jb-list'}>
     {
       dataSource.map((d) => (
-        <View className={'jb-list-item'} on onLongClick={() => onHomeListItemLongClick(d)} >
+        <View className={'jb-list-item'} onTap={() => onHomeListItemLongClick(d)} >
           <Image src={d.url} width={74} mode={'widthFix'} />
           <Divider direction="vertical" style={{ height: '100%' }} />
           <View className={'list-item-box'}>

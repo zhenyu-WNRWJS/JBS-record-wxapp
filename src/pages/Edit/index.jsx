@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View } from '@tarojs/components'
-import { Form, Input, Dialog, DatePicker, SearchBar, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
+import { Form, Input, DatePicker, Dialog, Checkbox, Picker, Button, Switch, TextArea } from '@nutui/nutui-react-taro'
 import { Checklist, ArrowRight } from '@nutui/icons-react-taro'
 import Taro from '@tarojs/taro';
 import MySearchBar from '../../components/MySearchBar'
@@ -128,6 +128,36 @@ function Edit() {
     setRoleList(item.roles.map((o) => ({ text: o, value: o })))
     setMissingRoles(item.roles)
   }
+
+  const delListData = async (id) => {
+    try {
+      const result = await Taro.cloud.callFunction({
+        name: 'deleteSession',
+        data: {
+          id,
+        },
+      })
+      if (result.result.error) {
+        console.error('云函数调用失败', result.result.error)
+      } else {
+        const data = result.result.data
+        // console.log(res.data)
+        Dialog.close('deleteId')
+        Taro.showToast({
+          title: '删除成功',
+          icon: 'success',
+          duration: 2000,
+          success: () => {
+            Taro.navigateBack()
+            // fetchListData(tab2value)
+          }
+        })
+      }
+    } catch (err) {
+      console.error('云函数调用失败', err)
+    }
+  }
+
   return (
     <View className={'add'}>
       <View className={'form'}>
@@ -149,6 +179,21 @@ function Edit() {
               <Button nativeType="reset" style={{ marginLeft: '20px' }}>
                 重置
               </Button>
+              <Button type="danger" onClick={() => {
+                Dialog.open('deleteId', {
+                  title: '确认删除该拼场信息？',
+                  // content: '可通过 Dialog.open 打开对话框',
+                  onConfirm: () => {
+                    delListData(id)
+                  },
+                  onCancel: () => {
+                    Dialog.close('deleteId')
+                  },
+                })
+              }} style={{ marginLeft: '20px' }}>
+                删除
+              </Button>
+              <Dialog id="deleteId" />
             </div>
           }
         >
