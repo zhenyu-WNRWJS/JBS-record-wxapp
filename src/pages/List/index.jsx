@@ -6,6 +6,8 @@ import { formateDayOfWeek } from '../../utils/index'
 import MyMatchList from '../../components/MyMatchList'
 import Taro, { useDidShow } from '@tarojs/taro';
 import { fieldReq } from '../../common/index'
+import useCallFunction from '../../hooks/useCallFunction'
+import MyOverlay from '../../components/MyOverlay'
 import './index.less'
 import { useUpdateEffect } from 'ahooks';
 
@@ -15,57 +17,32 @@ function List() {
   const [oldDataSource, setOldDataSource] = useState([])
   const [tab2value, setTab2value] = useState('0')
 
-  const fetchListData = async (tab2value) => {
-    const limit = 100 // 设置每次查询返回的记录数为100
+  const { loading, run: fetchListData } = useCallFunction('fetchListData', {
+    data: {
+      tab2value,
+      fieldReq: fieldReq,
+      limit: 100,
+      ...searchParams
+    },
+    success: (result) => {
+      const data = result.dataSource
+      setOldDataSource(data)
+      onDataSourceChange(data, tab2value, searchParams)
+    }
+  })
 
-    try {
-      const result = await Taro.cloud.callFunction({
-        name: 'fetchListData',
-        data: {
-          tab2value,
-          fieldReq: fieldReq,
-          limit: limit,
-          ...searchParams
+  const { loading: delLoading, run: delListData } = useCallFunction('deleteSession', {
+    success: (result) => {
+      Taro.showToast({
+        title: '删除成功',
+        icon: 'success',
+        duration: 2000,
+        success: () => {
+          fetchListData(tab2value)
         }
       })
-      if (result.result.error) {
-        console.error('云函数调用失败', result.result.error)
-      } else {
-        const data = result.result.dataSource
-        setOldDataSource(data)
-        onDataSourceChange(data, tab2value, searchParams)
-      }
-    } catch (err) {
-      console.error('云函数调用失败', err)
     }
-  }
-
-  const delListData = async (id) => {
-    try {
-      const result = await Taro.cloud.callFunction({
-        name: 'deleteSession',
-        data: {
-          id,
-        },
-      })
-      if (result.result.error) {
-        console.error('云函数调用失败', result.result.error)
-      } else {
-        const data = result.result.data
-        // console.log(res.data)
-        Taro.showToast({
-          title: '删除成功',
-          icon: 'success',
-          duration: 2000,
-          success: () => {
-            fetchListData(tab2value)
-          }
-        })
-      }
-    } catch (err) {
-      console.error('云函数调用失败', err)
-    }
-  }
+  })
 
   useDidShow(() => {
     fetchListData(tab2value)
@@ -165,7 +142,6 @@ function List() {
           defaultValue={'0'}
           value={tab2value}
           onChange={(item) => {
-            console.log(item)
             onDataSourceChange(oldDataSource, item.value, searchParams)
             setTab2value(item.value)
           }} />
@@ -208,6 +184,7 @@ function List() {
           复制拼本信息
         </Button>
       </View>}
+      <MyOverlay loading={loading} />
     </View>
   )
 }

@@ -6,6 +6,7 @@ import Taro from '@tarojs/taro';
 import MySearchBar from '../../components/MySearchBar'
 import { fieldReq } from '../../common/index'
 import moment from 'moment'
+import useCallFunction from '../../hooks/useCallFunction'
 import './index.less'
 
 const defaultValue = new Date()
@@ -55,50 +56,30 @@ function Edit() {
     });
   };
 
-  const submitSucceed = async (values) => {
-    try {
-      const result = await Taro.cloud.callFunction({
-        name: 'updateSession',
-        data: {
-          params: {
-            ...values,
-            date: new Date(values.date),
-            isFull: values.missingRoles.length == 0
-          },
-          id,
-        },
+  const { loading, run } = useCallFunction('updateSession', {
+    data: {
+      id,
+    },
+    success: (result) => {
+      Taro.showToast({
+        title: '编辑拼场成功',
+        icon: 'success',
+        duration: 2000,
+        success: () => {
+          Taro.navigateBack()
+        }
       })
-      if (result.result.error) {
-        console.error('云函数调用失败', result.result.error)
-      } else {
-        const data = result.result.data
-        // console.log(res.data)
-        Taro.showToast({
-          title: '编辑拼场成功',
-          icon: 'success',
-          duration: 2000,
-          success: () => {
-            Taro.navigateBack()
-          }
-        })
-      }
-    } catch (err) {
-      console.error('云函数调用失败', err)
     }
+  })
 
-
-    // db.collection('sessionInfo').doc(id).update({
-    //   // data 传入需要局部更新的数据
-    //   data: {
-    //     // 表示将 done 字段置为 true
-    //     ...values,
-    //     date: new Date(values.date),
-    //     isFull: values.missingRoles.length == 0
-    //   },
-    //   success: function (res) {
-
-    //   }
-    // })
+  const submitSucceed = async (values) => {
+    run({
+      params: {
+        ...values,
+        date: new Date(values.date),
+        isFull: values.missingRoles.length == 0
+      },
+    })
   }
 
   const onDateConfirm = (values, options) => {
@@ -129,34 +110,20 @@ function Edit() {
     setMissingRoles(item.roles)
   }
 
-  const delListData = async (id) => {
-    try {
-      const result = await Taro.cloud.callFunction({
-        name: 'deleteSession',
-        data: {
-          id,
-        },
+  const { loading: delLoading, run: delListData } = useCallFunction('deleteSession', {
+    success: (result) => {
+      Dialog.close('deleteId')
+      Taro.showToast({
+        title: '删除成功',
+        icon: 'success',
+        duration: 2000,
+        success: () => {
+          Taro.navigateBack()
+          // fetchListData(tab2value)
+        }
       })
-      if (result.result.error) {
-        console.error('云函数调用失败', result.result.error)
-      } else {
-        const data = result.result.data
-        // console.log(res.data)
-        Dialog.close('deleteId')
-        Taro.showToast({
-          title: '删除成功',
-          icon: 'success',
-          duration: 2000,
-          success: () => {
-            Taro.navigateBack()
-            // fetchListData(tab2value)
-          }
-        })
-      }
-    } catch (err) {
-      console.error('云函数调用失败', err)
     }
-  }
+  })
 
   return (
     <View className={'add'}>
@@ -173,7 +140,7 @@ function Edit() {
                 width: '100%',
               }}
             >
-              <Button nativeType="submit" type="primary">
+              <Button loading={loading} nativeType="submit" type="primary">
                 提交
               </Button>
               <Button nativeType="reset" style={{ marginLeft: '20px' }}>
@@ -184,7 +151,9 @@ function Edit() {
                   title: '确认删除该拼场信息？',
                   // content: '可通过 Dialog.open 打开对话框',
                   onConfirm: () => {
-                    delListData(id)
+                    delListData({
+                      id,
+                    })
                   },
                   onCancel: () => {
                     Dialog.close('deleteId')

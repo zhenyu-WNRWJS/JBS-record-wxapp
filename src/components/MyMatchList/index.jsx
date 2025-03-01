@@ -16,7 +16,7 @@ export default function MyMatchList({ dataSource, actionDel, onRefresh }) {
       })
     }
     if (text == '删除') {
-      actionDel(item._id)
+      actionDel({ id: item._id })
     }
   }
 

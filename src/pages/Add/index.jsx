@@ -4,6 +4,7 @@ import { Form, Input, Dialog, DatePicker, Cell, Checkbox, Picker, Button, Switch
 import { Checklist, ArrowRight } from '@nutui/icons-react-taro'
 import MySearchBar from '../../components/MySearchBar'
 import Taro, { useDidShow } from '@tarojs/taro';
+import useCallFunction from '../../hooks/useCallFunction'
 import './index.less'
 
 const defaultValue = new Date()
@@ -21,33 +22,26 @@ function Add() {
     form.resetFields()
   })
 
+  const { loading, run } = useCallFunction('addSession', {
+    success: (result) => {
+      Taro.showToast({
+        title: '添加拼场成功',
+        icon: 'success',
+        duration: 2000
+      })
+      form.resetFields()
+      setRoleList([])
+      setMissingRoles([])
+    }
+  })
+
   const submitSucceed = async (values) => {
     // console.log(values)
-    try {
-      const result = await Taro.cloud.callFunction({
-        name: 'addSession',
-        data: {
-          ...values,
-          date: new Date(values.date),
-          isFull: values.missingRoles.length == 0
-        },
-      })
-      if (result.result.error) {
-        console.error('云函数调用失败', result.result.error)
-      } else {
-        const data = result.result.data
-        Taro.showToast({
-          title: '添加拼场成功',
-          icon: 'success',
-          duration: 2000
-        })
-        form.resetFields()
-        setRoleList([])
-        setMissingRoles([])
-      }
-    } catch (err) {
-      console.error('云函数调用失败', err)
-    }
+    run({
+      ...values,
+      date: new Date(values.date),
+      isFull: values.missingRoles.length == 0
+    })
   }
 
   const onDateConfirm = (values, options) => {
@@ -92,7 +86,7 @@ function Add() {
                 width: '100%',
               }}
             >
-              <Button nativeType="submit" type="primary">
+              <Button loading={loading} nativeType="submit" type="primary">
                 提交
               </Button>
               <Button nativeType="reset" style={{ marginLeft: '20px' }}>

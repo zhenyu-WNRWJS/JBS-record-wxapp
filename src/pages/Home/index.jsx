@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { View } from '@tarojs/components'
-import { Avatar } from '@nutui/nutui-react-taro'
+import { Avatar, Overlay, Loading } from '@nutui/nutui-react-taro'
 import MyCalendar from '../../components/MyCalendar'
 import MyHomeCardList from '../../components/MyHomeCardList'
 import { fieldReq } from '../../common/index'
 import Taro, { useDidShow } from '@tarojs/taro';
 import moment from 'moment'
 import { useUpdateEffect } from 'ahooks';
+import useCallFunction from '../../hooks/useCallFunction'
+import MyOverlay from '../../components/MyOverlay'
 import './index.less'
 
 function Add() {
@@ -28,29 +30,18 @@ function Add() {
     {/* <View className={"avatar"}><Avatar size={'small'}>N</Avatar></View> */}
   </View>
 
-  const fetchListData = async () => {
-    const limit = 100 // 设置每次查询返回的记录数为100
-
-    try {
-      const result = await Taro.cloud.callFunction({
-        name: 'fetchHomeData',
-        data: {
-          date: date,
-          fieldReq: fieldReq,
-          limit: limit
-        }
-      })
-      if (result.result.error) {
-        console.error('云函数调用失败', result.result.error)
-      } else {
-        const data = result.result.data
-        setDataSource(data)
-        setFilterDataSource(data.filter((d) => moment(d.date).format('YYYY-MM-DD') == `${moment(date).format('YYYY-MM')}-${DD}`))
-      }
-    } catch (err) {
-      console.error('云函数调用失败', err)
+  const { loading, run: fetchListData } = useCallFunction('fetchHomeData', {
+    data: {
+      date: date,
+      fieldReq: fieldReq,
+      limit: 100
+    },
+    success: (result) => {
+      const data = result.data
+      setDataSource(data)
+      setFilterDataSource(data.filter((d) => moment(d.date).format('YYYY-MM-DD') == `${moment(date).format('YYYY-MM')}-${DD}`))
     }
-  }
+  })
 
   useDidShow(() => {
     fetchListData()
@@ -86,7 +77,7 @@ function Add() {
           <MyHomeCardList dataSource={filterDataSource} />
         </View>
       </View>
-
+      <MyOverlay loading={loading} />
     </View>
   )
 }
